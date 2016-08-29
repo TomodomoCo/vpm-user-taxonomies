@@ -207,14 +207,18 @@ class VPM_User_Taxonomies {
 	 */
 	public function user_profile($user) {
 
-		// Using output buffering as we need to make sure we have something before outputting the header
-		// But we can't rely on the number of taxonomies, as capabilities may vary
-		ob_start();
+		// TODO do we REALLY need output buffering?
 
-		foreach(self::$taxonomies as $key => $taxonomy):
+		if ( empty(self::$taxonomies) )
+			echo '<h3>' . __('Taxonomies') . '</h3>';
+
+
+		foreach (self::$taxonomies as $key => $taxonomy) :
 
 			// Check the current user can assign terms for this taxonomy
-			//if(!current_user_can($taxonomy->cap->assign_terms)) continue;
+			// TODO why is this commented out
+			// if(!current_user_can($taxonomy->cap->assign_terms)) continue;
+
 			// Get all the terms in this taxonomy
 			$terms = get_terms($key, array('hide_empty'=>false));
 			$stack = wp_list_pluck( wp_get_object_terms( $user->ID, $key ), 'slug' );
@@ -234,14 +238,6 @@ class VPM_User_Taxonomies {
 				</tr>
 			</table>
 		<?php endforeach;
-
-		// Output the above if we have anything, with a heading
-		$output = ob_get_clean();
-
-		if(!empty($output)) {
-			echo '<h3>' . __('Taxonomies') . '</h3>';
-			echo $output;
-		}
 	}
 
 	/**
