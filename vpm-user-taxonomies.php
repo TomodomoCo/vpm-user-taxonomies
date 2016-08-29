@@ -34,14 +34,6 @@ class VPM_User_Taxonomies {
 		add_action('user_register', array($this, 'save_profile'));
 		add_filter('sanitize_user', array($this, 'restrict_username'));
 		add_action('pre_user_query', array($this, 'user_query'));
-
-		// Admin column
-		add_filter('manage_users_columns', array($this, 'add_column'));
-		add_action('manage_users_custom_column', array($this, 'column_content'), 10, 3);
-
-		// Bulk edit
-		add_filter( 'views_users', array( $this, 'bulk_edit') );
-		add_action( 'admin_init',  array( $this, 'bulk_edit_action' ) );
 	}
 
 	/**
@@ -289,47 +281,6 @@ class VPM_User_Taxonomies {
 	}
 
 	/**
-	 * Add columns for columns with
-	 * show_admin_column
-	 */
-	public function add_column($columns) {
-		$args = [
-			'object_type' => [
-				'user',
-			],
-			'show_admin_column' => true,
-		];
-
-		$taxonomies = get_taxonomies($args, 'objects');
-
-		foreach ($taxonomies as $taxonomy) {
-			$columns[$taxonomy->name] = $taxonomy->labels->name;
-		}
-
-		return $columns;
-	}
-
-	/**
-	 * Just a private function to populate column content
-	 */
-	private function get_user_taxonomies($user, $taxonomy, $page = null) {
-		$terms = wp_get_object_terms( $user, $taxonomy);
-
-		if ( empty($terms) )
-			return false;
-
-		$in = array();
-
-		foreach ($terms as $term) {
-			$href = empty($page) ? add_query_arg([$taxonomy => $term->slug], admin_url('users.php')) : add_query_arg(['user-group' => $term->slug], $page);
-			$in[] = sprintf('%s%s%s', '<a href="'.$href.'" title="'.esc_attr($term->description).'">', $term->name, '</a>');
-		}
-
-		return implode('', $in);
-	}
-
-
-	/**
 	 * Get terms for a user and a taxonomy
 	 *
 	 * @since 0.1.0
@@ -382,18 +333,6 @@ class VPM_User_Taxonomies {
 		clean_object_term_cache( $user_id, $taxonomy );
 	}
 
-
-	/**
-	 * Add the column content
-	 */
-	public function column_content($value, $column_name, $user_id) {
-		if (taxonomy_exists($column_name)) {
-			return $this->get_user_taxonomies($user_id,$column_name);
-		} else {
-			return $value;
-		}
-	}
-
 	/**
 	 * Alters the user query to return a different list based on
 	 * query vars on users.php or if a tax_query is set
@@ -444,145 +383,6 @@ class VPM_User_Taxonomies {
 				$query->query_where .= " AND $wpdb->users.ID IN ($ids)";
 			}
 		}
-	}
-
-	/**
-	 * Handle bulk editing of users
-	 */
-	public function bulk_edit_action() {
-		// TODO
-		//need to fix this nonce and name are same
-		if ( ! isset($_POST[$this->namespace."-bulk_edit-taxonomy"]) )
-			return;
-
-		if ( ! wp_verify_nonce($_POST[$this->namespace."-bulk_edit-nonce"], $this->namespace."-bulk_edit-nonce" ))
-			return;
-
-		$taxonomy = $_POST[$this->namespace."-bulk_edit-taxonomy"];
-
-		// Setup the empty users array
-		$users = array();
-
-		// Get an array of users from the string
-		parse_str( urldecode( $_POST[ $taxonomy . '-bulk_users_to_action'] ), $users );
-
-		if ( empty( $users['users'] ) )
-			return;
-
-		$users  = $users['users'];
-		$action = strstr( $_POST[$this->namespace."-bulk_edit-action"], '-', true );
-		$term   = str_replace( $action, '', $_POST[$this->namespace."-bulk_edit-action"] );
-
-		// Loop through users
-		foreach ( $users as $user ) {
-
-			if ( ! current_user_can( 'edit_user', $user ) )
-				continue;
-
-			// Get term slugs of user for this taxonomy
-			$terms = $this->get_terms_for_user( $user, $taxonomy);
-
-			$update_terms = wp_list_pluck( $terms, 'slug' );
-
-			// Adding
-			if ( 'add' === $action ) {
-				if ( ! in_array( $term, $update_terms ) ) {
-					$update_terms[] = $term;
-				}
-
-			// Removing
-			} elseif ( 'remove' === $action ) {
-
-				$index = array_search( $term, $update_terms );
-
-				if ( isset( $update_terms[ $index ] ) ) {
-					unset( $update_terms[ $index ] );
-				}
-			}
-
-			// Delete all groups if they're empty
-			if ( empty( $update_terms ) )
-				$update_terms = null;
-
-			// Update terms for users
-			if ( $update_terms !== $terms )
-				$this->set_terms_for_user( $user, $taxonomy, $update_terms, true );
-		}
-
-		// Success
-		wp_safe_redirect( admin_url( 'users.php' ) );
-		exit;
-	}
-
-
-	/**
-	 * Output the bulk edit markup where show_admin_column is true
-	 *
-	 * @param   type  $views
-	 * @return  type
-	 */
-	public function bulk_edit( $views = array() ) {
-		// Bail if user cannot edit other users
-		if ( ! current_user_can( 'list_users' ) )
-			return $views;
-
-		// Get taxonomies
-		$args = array(
-			'object_type' => array('user'),
-			'show_admin_column' => true
-		);
-
-		$taxonomies = get_taxonomies( $args, 'objects');
-
-		foreach ($taxonomies as $taxonomy){
-
-			$terms = get_terms( $taxonomy->name, array('hide_empty' => false ) );
-			?>
-			<form method="post" class="user-tax-form">
-				<fieldset class="alignleft">
-					<legend class="screen-reader-text"><?php esc_html_e( 'Update Groups', $this->namespace ); ?></legend>
-
-					<input name="<?php echo esc_attr( $taxonomy->name ); ?>-bulk_users_to_action" value="" type="hidden" id="<?php echo esc_attr( $taxonomy->name ); ?>-bulk_users_to_action" />
-
-					<label for="<?php echo esc_attr( $taxonomy->name ); ?>-select" class="screen-reader-text">
-						<?php echo esc_html( $taxonomy->labels->name ); ?>
-					</label>
-
-					<select class="tax-picker" name="<?php echo esc_attr( $this->namespace ); ?>-bulk_edit-action" id="<?php echo esc_attr( $this->namespace ); ?>-<?php echo esc_attr( $taxonomy->name ); ?>-bulk_edit-action" required="required">
-						<option value=""><?php printf( esc_html__( '%s Bulk Update', $this->namespace ), $taxonomy->labels->name ); ?></option>
-						<optgroup label="<?php esc_html_e( 'Add', $this->namespace ); ?>">
-							<?php foreach ( $terms as $term ) : ?>
-								<option value="add-<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></option>
-							<?php endforeach; ?>
-						</optgroup>
-						<optgroup label="<?php esc_html_e( 'Remove', $this->namespace ); ?>">
-							<?php foreach ( $terms as $term ) : ?>
-								<option value="remove-<?php echo esc_attr( $term->slug ); ?>"><?php echo esc_html( $term->name ); ?></option>
-							<?php endforeach; ?>
-						</optgroup>
-					</select>
-
-					<input id="<?php echo $this->namespace;  ?>-<?php echo $taxonomy->name;  ?>-bulk_edit-nonce" name="<?php  echo $this->namespace;  ?>-bulk_edit-nonce" value="<?php echo wp_create_nonce($this->namespace."-bulk_edit-nonce"); ?>" type="hidden" />
-					<input id="<?php echo $this->namespace;  ?>-<?php echo $taxonomy->name;  ?>-bulk_edit-taxonomy" name="<?php  echo $this->namespace;  ?>-bulk_edit-taxonomy" value="<?php echo $taxonomy->name; ?>" type="hidden" />
-
-					<?php submit_button( esc_html__( 'Apply' ), 'action', $taxonomy->name . '-submit', false ); ?>
-				</fieldset>
-			</form>
-
-			<script type="text/javascript">
-				jQuery(document).ready( function($) {
-					$('.tablenav.bottom').remove();
-					$('.wrap').append( $('.user-tax-form') );
-					$('.wrap').on('submit', '.user-tax-form', function() {
-						var users = $( '.wp-list-table.users .check-column input:checked' ).serialize();
-						$( '#<?php echo esc_attr( $taxonomy->name ); ?>-bulk_users_to_action' ).val( users );
-					});
-				});
-			</script>
-			<?php
-		}
-
-		return $views;
 	}
 
 }

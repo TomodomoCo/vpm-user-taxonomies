@@ -6,6 +6,8 @@ VPM User Taxonomies aims to provide a clean, minimal implementation of user taxo
 
 Specifically, this implementation of taxonomies aims to achieve feature and experience-parity between user taxonomies and traditional post taxonomies.
 
+This plugin should be considered unstable, and is under active development.
+
 Pull requests are welcome!
 
 ## Changelog
@@ -16,6 +18,7 @@ Pull requests are welcome!
 + Handle array-based post type definitions
 + Lots of code formatting improvements
 + Remove support for single_value (not native to WP)
++ Temporarily (we hope) removed support for admin columns and bulk editing, in the interest of refactoring
 
 ### 1.51
 + Fixed readme
