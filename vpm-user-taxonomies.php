@@ -207,11 +207,8 @@ class VPM_User_Taxonomies {
 	 */
 	public function user_profile($user) {
 
-		// TODO do we REALLY need output buffering?
-
 		if ( empty(self::$taxonomies) )
 			echo '<h3>' . __('Taxonomies') . '</h3>';
-
 
 		foreach (self::$taxonomies as $key => $taxonomy) :
 
@@ -248,7 +245,7 @@ class VPM_User_Taxonomies {
 	public function save_profile($user_id) {
 		foreach(self::$taxonomies as $key => $taxonomy) {
 			// Check the current user can edit this user and assign terms for this taxonomy
-			if(current_user_can('edit_user', $user_id) && current_user_can($taxonomy->cap->assign_terms)){
+			if (current_user_can('edit_user', $user_id) && current_user_can($taxonomy->cap->assign_terms)) {
 
 				if (is_array($_POST[$key])){
 					$term = $_POST[$key];
@@ -265,12 +262,11 @@ class VPM_User_Taxonomies {
 	}
 
 	/**
-	 * Usernames can't match any of our user taxonomies
-	 * As otherwise it will cause a URL conflict
-	 * This method prevents that happening
+	 * Usernames can't match any of our user taxonomies as it will cause a URL conflict.
+	 * This method prevents that from happening.
 	 */
 	public function restrict_username($username) {
-		if(isset(self::$taxonomies[$username]))
+		if (isset(self::$taxonomies[$username]))
 			return;
 
 		return $username;
@@ -300,6 +296,9 @@ class VPM_User_Taxonomies {
 		) );
 	}
 
+	/**
+	 * Set the terms for a user
+	 */
 	private function set_terms_for_user( $user_id, $taxonomy, $terms = array(), $bulk = false ) {
 		// Get the taxonomy
 		$tax = get_taxonomy( $taxonomy );
