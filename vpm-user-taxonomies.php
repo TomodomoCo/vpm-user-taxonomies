@@ -182,8 +182,8 @@ class VPM_User_Taxonomies {
 
 	private function renderTree( $elements, $stack, $user, $key ) {
 		foreach ( $elements as $element ) {
+			echo '<li>';
 			?>
-			<div>
 				<input type="checkbox" name="<?php echo $key?>[]" id="<?php echo "{$key}-{$element->slug}"?>" value="<?php echo $element->slug?>" <?php
 				if ($user->ID){
 					if (in_array($element->slug, $stack)) {
@@ -192,12 +192,13 @@ class VPM_User_Taxonomies {
 				}
 				?> />
 				<label for="<?php echo "{$key}-{$element->slug}"?>"><?php echo $element->name ?></label>
-				<?php if( isset( $element->children ) ) {
-					?><div style="padding-left: 24px;"><?php
-						$this->renderTree( $element->children, $stack, $user, $key );
-					?></div><?php
+				<?php
+				if (isset($element->children)) {
+					echo '<ul>';
+					$this->renderTree( $element->children, $stack, $user, $key );
+					echo '</ul>';
 				}
-			?></div><?php
+			echo '</li>';
 	    }
 	}
 	/**
@@ -222,15 +223,24 @@ class VPM_User_Taxonomies {
 			?>
 			<table class="form-table">
 				<tr>
-					<th><label for=""><?php _e("Select {$taxonomy->labels->singular_name}")?></label></th>
+					<th><label for=""><?php _e("Select {$taxonomy->labels->name}")?></label></th>
 					<td>
-						<?php
-						if(!empty($terms)) {
-							$this->renderTree( $this->buildTree( $terms ), $stack, $user, $key );
-						} else {
-							_e("There are no {$taxonomy->name} available.");
-						}
-						?>
+						<div class="categorydiv">
+							<ul class="category-tabs">
+								<li class="tabs"><?php echo $taxonomy->labels->name; ?></li>
+							</ul>
+							<div class="tabs-panel">
+								<ul class="categorychecklist form-no-clear">
+									<?php
+									if (!empty($terms)) {
+										$this->renderTree( $this->buildTree( $terms ), $stack, $user, $key );
+									} else {
+										_e("There are no {$taxonomy->name} available.");
+									}
+									?>
+								</ul>
+							</div>
+						</div>
 					</td>
 				</tr>
 			</table>
