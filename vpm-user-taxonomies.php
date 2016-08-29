@@ -208,7 +208,7 @@ class VPM_User_Taxonomies {
 	 */
 	public function user_profile($user) {
 
-		if ( empty(self::$taxonomies) )
+		if ( ! empty(self::$taxonomies) )
 			echo '<h3>' . __('Taxonomies') . '</h3>';
 
 		foreach (self::$taxonomies as $key => $taxonomy) :
