@@ -10,6 +10,14 @@ This plugin should be considered unstable, and is under active development.
 
 Pull requests are welcome!
 
+## Usage
+
+When calling `register_taxonomy`, you can use `user` as an object type for your taxonomy (either as a string, or as part of your object type array).
+
+You can view and edit the taxonomies associated with a user in the profile edit screen.
+
+You can query a user, based on taxonomies and terms, by adding the `tax_query` parameter to your `WP_User_Query` call.
+
 ## Changelog
 
 ### 2.0.0
@@ -19,6 +27,7 @@ Pull requests are welcome!
 + Lots of code formatting improvements
 + Remove support for single_value (not native to WP)
 + Temporarily (we hope) removed support for admin columns and bulk editing, in the interest of refactoring
++ Add support for `tax_query` within `WP_User_Query`
 
 ### 1.51
 + Fixed readme
