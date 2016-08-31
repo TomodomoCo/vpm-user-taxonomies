@@ -1,0 +1,16 @@
+{
+  "name": "vanpattenmedia/vpm-user-taxonomies",
+  "description": "User taxonomy support in WordPress",
+  "keywords": ["wordpress", "plugin"],
+  "homepage": "https://www.vanpattenmedia.com/",
+  "authors": [
+    {
+      "name": "Chris Van Patten",
+      "homepage": "http://www.chrisvanpatten.com/"
+    }
+  ],
+  "type": "wordpress-plugin",
+  "require": {
+    "composer/installers": "~1.0"
+  }
+}
