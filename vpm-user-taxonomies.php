@@ -257,10 +257,10 @@ class VPM_User_Taxonomies {
 			// Check the current user can edit this user and assign terms for this taxonomy
 			if (current_user_can('edit_user', $user_id) && current_user_can($taxonomy->cap->assign_terms)) {
 
-				if (is_array($_POST[$key])){
+				if (isset($_POST[$key]) && is_array($_POST[$key])){
 					$term = $_POST[$key];
 					wp_set_object_terms($user_id, $term, $key, false);
-				} else {
+				} else if (isset($_POST[$key])) {
 					$term = esc_attr($_POST[$key]);
 					wp_set_object_terms($user_id, array($term), $key, false);
 				}
