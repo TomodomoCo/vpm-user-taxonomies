@@ -257,15 +257,19 @@ class VPM_User_Taxonomies {
 			// Check the current user can edit this user and assign terms for this taxonomy
 			if (current_user_can('edit_user', $user_id) && current_user_can($taxonomy->cap->assign_terms)) {
 
+				// Set up our terms to be saved (or not)
 				if (isset($_POST[$key]) && is_array($_POST[$key])){
 					$term = $_POST[$key];
-					wp_set_object_terms($user_id, $term, $key, false);
 				} else if (isset($_POST[$key])) {
-					$term = esc_attr($_POST[$key]);
-					wp_set_object_terms($user_id, array($term), $key, false);
+					$term = array(esc_attr($_POST[$key]));
+				} else {
+					$term = array();
 				}
 
 				// Save the data
+				wp_set_object_terms($user_id, $term, $key, false);
+
+				// Clean the object/term cache
 				clean_object_term_cache($user_id, $key);
 			}
 		}
