@@ -345,19 +345,22 @@ class VPM_User_Taxonomies {
 	/**
 	 * Alters the user query to return a different list based on
 	 * query vars on users.php or if a tax_query is set
+	 *
+	 * @param mixed $query
+	 * @return void
 	 */
 	public function user_query( $query = '' ) {
 		global $pagenow, $wpdb;
 
 		// Handle the tax query
-		if ( isset( $query->query_vars['tax_query'] ) && is_array( $query->query_vars['tax_query'] ) ) {
-			$sql = get_tax_sql( $query->query_vars['tax_query'], $wpdb->prefix . 'users', 'ID' );
+		if ( isset($query->query_vars['tax_query']) && is_array($query->query_vars['tax_query']) ) {
+			$sql = get_tax_sql($query->query_vars['tax_query'], $wpdb->prefix . 'users', 'ID');
 
-			if ( isset( $sql['join'] ) ){
+			if ( isset($sql['join']) ){
 				$query->query_from .= $sql['join'];
 			}
 
-			if ( isset( $sql['where'] ) ){
+			if ( isset($sql['where']) ){
 				$query->query_where .= $sql['where'];
 			}
 
@@ -365,21 +368,22 @@ class VPM_User_Taxonomies {
 		}
 
 		// Handle the user pages
-		// TODO can probably improve this
-		if ( $pagenow == 'users.php' ) {
-			$args = array(
-				'object_type' => array('user'),
-				'show_admin_column' => true
-			);
+		if ( $pagenow === 'users.php' ) {
+			$taxonomies = get_object_taxonomies('user', 'objects');
 
-			$taxonomies = get_taxonomies( $args, "objects");
-
-			foreach ($taxonomies as $taxonomy) {
-				if(!empty($_GET[$taxonomy->name])) {
+			foreach ( $taxonomies as $taxonomy ) {
+				if ( !empty($_GET[$taxonomy->name]) ) {
 					$term = get_term_by('slug', esc_attr($_GET[$taxonomy->name]), $taxonomy->name);
+
+					// TODO do a better job of handling when a taxonomy is invalid
+					// Should follow core behaviour and return no results
+					if ( $term === false ) {
+						continue;
+					}
+
 					$new_ids = get_objects_in_term($term->term_id, $taxonomy->name);
 
-					if (!isset($ids) || empty($ids)){
+					if ( !isset($ids) || empty($ids) ) {
 						$ids = $new_ids;
 					} else {
 						$ids = array_intersect($ids, $new_ids);
@@ -387,8 +391,8 @@ class VPM_User_Taxonomies {
 				}
 			}
 
-			if ( isset( $ids ) ) {
-				$ids = implode(',', wp_parse_id_list( $ids ) );
+			if ( isset($ids) ) {
+				$ids = implode(',', wp_parse_id_list($ids));
 				$query->query_where .= " AND $wpdb->users.ID IN ($ids)";
 			}
 		}
